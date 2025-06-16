@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% block title %}Bloquear días{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="card" style="max-width: 600px; margin: 2rem auto;">
+        <div class="card-header">
+            <h1><i class="fas fa-ban" style="color: var(--color-oro);"></i> Bloquear días</h1>
+            <p style="color: var(--color-oro); font-family: 'Playfair Display', serif;">Elige un rango de días para bloquear reservas</p>
+        </div>
+        <div class="card-body">
+            {% if mensaje %}
+                <div class="alert alert-success">{{ mensaje }}</div>
+            {% endif %}
+            <form method="post" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                <div class="form-row" style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="start_date"><i class="far fa-calendar-alt" style="color: var(--color-oro);"></i> Fecha inicio</label>
+                        <input type="date" name="start_date" id="start_date" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="end_date"><i class="far fa-calendar-alt" style="color: var(--color-oro);"></i> Fecha fin</label>
+                        <input type="date" name="end_date" id="end_date" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="motivo"><i class="fas fa-info-circle" style="color: var(--color-oro);"></i> Motivo (opcional)</label>
+                    <input type="text" name="motivo" id="motivo" class="form-control" placeholder="Motivo del bloqueo (opcional)">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;"><i class="fas fa-ban"></i> Bloquear días</button>
+            </form>
+            <hr>
+            <h3 style="color: var(--color-madera); margin-top: 2rem;">Días y horarios bloqueados</h3>
+            <ul style="list-style: none; padding: 0;">
+                {% for b in bloqueos %}
+                <li style="background: var(--color-marmol); border-radius: 8px; box-shadow: var(--sombra); margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--color-marmol-oscuro); display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                    <div>
+                        <strong>{{ b.start_date }}{% if b.start_time %} {{ b.start_time }}{% endif %}</strong>
+                        {% if b.start_date != b.end_date or b.end_time %}
+                            - <strong>{{ b.end_date }}{% if b.end_time and b.start_date == b.end_date %} {{ b.end_time }}{% endif %}</strong>
+                        {% endif %}
+                        {% if b.motivo %}<br><span style="color: var(--color-oro);">Motivo: {{ b.motivo }}</span>{% endif %}
+                    </div>
+                    <form method="post" action="{{ url_for('admin.eliminar_bloqueo', id=b.id) }}" style="margin:0;">
+                        <button type="submit" class="btn" style="background:#dc3545; color:white; padding:0.5rem 1.2rem; min-width: 0; width:auto; font-size:0.95em;">
+                            <i class="fas fa-trash-alt"></i> Quitar
+                        </button>
+                    </form>
+                </li>
+                {% else %}
+                <li style="color: var(--color-madera);">No hay días bloqueados.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/bloquear_horas.js') }}"></script>
+{% endblock %}

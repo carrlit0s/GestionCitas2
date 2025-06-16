@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            background-color: #343a40;
+            color: #ffffff;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .card-header {
+            background-color: #495057;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .form-control {
+            background-color: #495057;
+            color: #ffffff;
+            border: 1px solid #ced4da;
+            border-radius: 0.5rem;
+        }
+        .form-control:focus {
+            background-color: #343a40;
+            color: #ffffff;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .btn {
+            background-color: #ffc107;
+            color: #343a40;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #e0a800;
+        }
+        .alert {
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    {% extends "layout.html" %}
+    {% set ocultar_nav = True %}
+
+    {% block title %}Iniciar Sesión{% endblock %}
+
+    {% block content %}
+    <div class="container">
+        <div class="card" style="max-width: 400px; width: 100%; margin: 0 auto;">
+            <div class="card-header">
+                <h1 style="margin-bottom: 0.5rem;"><i class="fas fa-user-lock" style="color: var(--color-oro);"></i> Acceso Administrador</h1>
+                <p style="color: var(--color-oro); font-family: 'Playfair Display', serif;">Panel privado</p>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger" style="margin-bottom: 1rem;">{{ error }}</div>
+                {% endif %}
+                <form method="post" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div class="form-group">
+                        <label for="usuario"><i class="fas fa-user" style="color: var(--color-oro);"></i> Usuario</label>
+                        <input type="text" name="usuario" id="usuario" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="clave"><i class="fas fa-lock" style="color: var(--color-oro);"></i> Contraseña</label>
+                        <input type="password" name="clave" id="clave" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+</body>
+</html>
+<!-- This is a simple login page for the owner of the hair salon. It includes a form for entering the username and password, and displays an error message if the login fails. -->

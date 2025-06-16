@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title %}Solicitudes pendientes{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h1><i class="fas fa-clipboard-list"></i> Solicitudes pendientes</h1>
+        </div>
+        <div class="card-body">
+        {% if citas %}
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for cita in citas %}
+                <li style="background: var(--color-marmol); border-radius: 10px; box-shadow: var(--sombra); margin-bottom: 1.5rem; padding: 1.5rem; border: 1px solid var(--color-marmol-oscuro); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
+                    <div style="flex: 2; min-width: 220px;">
+                        <div style="font-size: 1.1rem; color: var(--color-madera); font-weight: 600; margin-bottom: 0.5rem;">
+                            <i class="far fa-calendar-alt" style="color: var(--color-oro);"></i> {{ cita.fecha.replace('T', ' ') }}
+                        </div>
+                        <div style="margin-bottom: 0.3rem;"><i class="fas fa-user" style="color: var(--color-oro);"></i> <strong>Nombre:</strong> {{ cita.nombre }}</div>
+                        <div style="margin-bottom: 0.3rem;"><i class="fas fa-envelope" style="color: var(--color-oro);"></i> <strong>Correo:</strong> {{ cita.correo }}</div>
+                        <div style="margin-bottom: 0.3rem;"><i class="fas fa-phone" style="color: var(--color-oro);"></i> <strong>Teléfono:</strong> {{ cita.telefono }}</div>
+                        <div><i class="fas fa-cut" style="color: var(--color-oro);"></i> <strong>Servicio:</strong> {{ cita.servicio }}</div>
+                    </div>
+                    <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-end;">
+                        <a href="{{ url_for('admin.aceptar_cita', id=cita.id) }}" class="btn" style="background: var(--color-oro); color: white; width: 100%;"><i class="fas fa-check"></i> Aceptar</a>
+                        <a href="{{ url_for('admin.rechazar_cita', id=cita.id) }}" class="btn" style="background: #dc3545; color: white; width: 100%;"><i class="fas fa-times"></i> Rechazar</a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="text-align:center; color: var(--color-madera); font-size: 1.1rem;">No hay solicitudes pendientes.</p>
+        {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

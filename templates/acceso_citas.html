@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+{% block title %}Consultar mis citas{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="card marble-effect">
+        <div class="card-header">
+            <h2><i class="fas fa-calendar-check" style="margin-right: 10px;"></i> Consultar mis citas</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" class="booking-form">
+                <div class="form-group">
+                    <label for="correo"><i class="fas fa-envelope" style="color: var(--color-oro); margin-right: 8px;"></i> Introduce tu correo:</label>
+                    <input type="email" name="correo" id="correo" class="form-control" required placeholder="tucorreo@ejemplo.com">
+                </div>
+                <button type="submit" class="btn">
+                    <i class="fas fa-search"></i> Ver mis citas
+                </button>
+            </form>
+            <div class="text-center mt-4">
+                <a href="{{ url_for('cliente.reservar') }}" class="btn" style="display:inline-block; background: var(--color-madera); color: white; padding: 0.8rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: var(--transicion);">
+                    <i class="fas fa-arrow-left"></i> !Haz tu reserva ahora!
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}{% endblock %}

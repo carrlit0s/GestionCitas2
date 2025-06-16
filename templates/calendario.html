@@ -1,0 +1,413 @@
+{% extends "layout.html" %}
+
+{% block title %}<i class="far fa-calendar-alt"></i> Calendario de Citas{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h1><i class="far fa-calendar-alt"></i> Calendario de Citas</h1>
+            <p>Gestiona tus citas de manera sencilla y rápida</p>
+        </div>
+        <div class="card-body">
+            <button id="mostrar-form-cita-manual" class="btn" style="margin-bottom: 1.5rem;">
+                <i class="fas fa-plus-circle"></i> Crear cita manual
+            </button>
+            <div id="contenedor-form-cita-manual" style="display:none; margin-bottom: 2rem; background: rgba(249, 249, 249, 0.9); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--color-marmol-oscuro);">
+                <h3 style="color: var(--color-madera); margin-top: 0; margin-bottom: 1.5rem; font-family: 'Playfair Display', serif; border-bottom: 2px solid var(--color-oro); padding-bottom: 0.5rem; display: inline-block;">
+                    <i class="fas fa-calendar-plus"></i> Nueva Cita Manual
+                </h3>
+                <form id="form-cita-manual" class="booking-form">
+                    <div class="form-group">
+                        <label for="nombre-manual"><i class="fas fa-user" style="color: var(--color-oro); margin-right: 8px;"></i> Nombre del Cliente</label>
+                        <input type="text" id="nombre-manual" class="form-control" placeholder="Nombre completo del cliente" required>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="dia-manual"><i class="far fa-calendar" style="color: var(--color-oro); margin-right: 8px;"></i> Día</label>
+                            <input type="text" id="dia-manual" class="form-control flatpickr-date" placeholder="Selecciona una fecha" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="hora-manual"><i class="far fa-clock" style="color: var(--color-oro); margin-right: 8px;"></i> Hora</label>
+                            <select id="hora-manual" class="form-control" required>
+                                <option value="" disabled selected>Selecciona una hora</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button type="submit" class="btn" style="flex: 1;">
+                            <i class="fas fa-save"></i> Crear Cita
+                        </button>
+                        <button type="button" id="cancelar-cita-manual" class="btn" style="background: #6c757d; flex: 0.5;">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+                <div id="mensaje-cita-manual" class="alert" style="margin-top: 1rem; display: none;"></div>
+            </div>
+            <div id="calendar" style="background: var(--color-marmol); border-radius: 12px; box-shadow: var(--sombra); padding: 1rem;"></div>
+        </div>
+    </div>
+</div>
+<!-- Modal para detalles de cita -->
+<div id="popup" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:white; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.15); z-index:2000; width:300px; max-width:90%; padding:1rem; font-size:0.9em; line-height:1.4; text-align:center; margin: 0 !important; touch-action: none;">
+    <div id="detalle" style="max-height:70vh; overflow-y:auto; padding:0 0.5rem 0.5rem 0.5rem; margin:0 -0.5rem; -webkit-overflow-scrolling: touch;">
+        <div style="padding: 0.5rem 0; font-weight: bold; cursor: move; user-select: none; -webkit-user-select: none;">Arrastra para mover</div>
+    </div>
+    <div style="display:flex; justify-content:center; margin-top:0.8rem;">
+        <button id="cerrar" class="btn" style="background:var(--color-madera); color:white; padding:0.3rem 1rem; font-size:0.9em; border-radius:20px; border:none; cursor:pointer; touch-action: manipulation;">Cerrar</button>
+    </div>
+</div>
+
+<script>
+// Hacer el modal arrastrable
+function makeDraggable(element, handle) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    if (handle) {
+        handle.onmousedown = dragMouseDown;
+        handle.ontouchstart = dragMouseDown;
+    }
+
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        
+        // Obtener la posición del puntero en el momento del inicio del arrastre
+        if (e.type === 'mousedown') {
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        } else if (e.type === 'touchstart') {
+            pos3 = e.touches[0].clientX;
+            pos4 = e.touches[0].clientY;
+            document.ontouchend = closeDragElement;
+            document.ontouchmove = elementDrag;
+        }
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        
+        // Calcular la nueva posición
+        if (e.type === 'mousemove') {
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+        } else if (e.type === 'touchmove') {
+            pos1 = pos3 - e.touches[0].clientX;
+            pos2 = pos4 - e.touches[0].clientY;
+            pos3 = e.touches[0].clientX;
+            pos4 = e.touches[0].clientY;
+        }
+        
+        // Establecer la nueva posición del elemento
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+        element.style.transform = 'none';
+    }
+
+    function closeDragElement() {
+        // Detener el movimiento cuando se suelta el botón del ratón
+        document.onmouseup = null;
+        document.onmousemove = null;
+        document.ontouchend = null;
+        document.ontouchmove = null;
+    }
+}
+
+// Inicializar el arrastre cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    const popup = document.getElementById('popup');
+    const dragHandle = popup.querySelector('div');
+    
+    // Hacer el modal arrastrable
+    makeDraggable(popup, dragHandle);
+    
+    // Manejar el botón de cerrar
+    document.getElementById('cerrar').addEventListener('click', function() {
+        popup.style.display = 'none';
+    });
+    
+    // Asegurar que el modal esté dentro de los límites de la ventana
+    function keepInViewport() {
+        if (window.innerWidth <= 768) {
+            const rect = popup.getBoundingClientRect();
+            
+            if (rect.top < 0) {
+                popup.style.top = '10px';
+            }
+            
+            if (rect.bottom > window.innerHeight) {
+                popup.style.top = (window.innerHeight - rect.height - 10) + 'px';
+            }
+            
+            if (rect.left < 0) {
+                popup.style.left = '10px';
+            }
+            
+            if (rect.right > window.innerWidth) {
+                popup.style.left = (window.innerWidth - rect.width - 10) + 'px';
+            }
+        }
+    }
+    
+    window.addEventListener('resize', keepInViewport);
+    window.addEventListener('orientationchange', keepInViewport);
+});
+</script>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- FullCalendar CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/es.js"></script>
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+<!-- Estilos personalizados para el calendario -->
+<style>
+    #calendar {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    .fc-event {
+        cursor: pointer;
+    }
+    .fc-event-title {
+        white-space: normal;
+    }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Inicializar flatpickr para los selectores de fecha
+    flatpickr(".flatpickr-date", {
+        locale: "es",
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        disable: [date => date.getDay() === 0]
+    });
+
+    // Obtener las citas del template
+    let citas = [];
+    try {
+        citas = JSON.parse('{{ citas|tojson|safe }}');
+    } catch (e) { 
+        console.error("Error al parsear citas:", e);
+        citas = []; 
+    }
+
+    const calendarEl = document.getElementById('calendar');
+    
+    // Cargar días bloqueados y luego inicializar el calendario
+    fetch("{{ url_for('admin.api_dias_bloqueados') }}")
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Error al cargar días bloqueados');
+            }
+            return res.json();
+        })
+        .then(bloqueos => {
+            console.log("Días bloqueados cargados:", bloqueos);
+            
+            // Inicializar el calendario
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                locale: 'es',
+                firstDay: 1,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: [...citas, ...bloqueos],
+                slotMinTime: '07:00:00',
+                nowIndicator: true,
+                eventClick: function(info) {
+                    if (info.event.title === 'Día bloqueado') {
+                        let motivo = info.event.extendedProps.motivo;
+                        document.getElementById('detalle').innerHTML = `<strong style='color:#dc3545;'>Día bloqueado</strong><br>${motivo ? '<b>Motivo:</b> ' + motivo : ''}`;
+                        document.getElementById('popup').style.display = 'block';
+                        return;
+                    }
+                    var props = info.event.extendedProps;
+                    var detalles = `
+                        <div style="margin-bottom:0.3rem;"><strong>Cliente:</strong> ${props.nombre}</div>
+                        ${props.correo ? `<div style="margin-bottom:0.3rem;"><strong>Email:</strong> ${props.correo}</div>` : ''}
+                        ${props.telefono ? `<div style="margin-bottom:0.3rem;"><strong>Teléfono:</strong> ${props.telefono}</div>` : ''}
+                        <div style="margin-bottom:0.3rem;"><strong>Estado:</strong> ${props.estado}</div>
+                        <div style="margin-bottom:0.3rem;"><strong>Servicio:</strong> ${props.servicio}</div>`;
+                    if (props.estado === "pendiente") {
+                        detalles += `<div style="display:flex; gap:0.6rem; margin:0.8rem 0; justify-content:center;">
+                            <button onclick="gestionarCita(${info.event.id},'aceptar')" class='btn' style='background:var(--color-oro);color:white; padding:0.3rem 1rem; font-size:0.85em; border-radius:20px; border:none; cursor:pointer; flex: 0 1 auto;'>Aceptar</button>
+                            <button onclick="gestionarCita(${info.event.id},'rechazar')" class='btn' style='background:#dc3545;color:white; padding:0.3rem 1rem; font-size:0.85em; border-radius:20px; border:none; cursor:pointer; flex: 0 1 auto;'>Rechazar</button>
+                        </div>`;
+                    } else if (props.estado === "aceptada") {
+                        detalles += `<div style="display:flex; gap:0.6rem; margin:0.8rem 0; justify-content:center;">
+                            <button onclick="eliminarCita(${info.event.id})" class='btn' style='background:#dc3545;color:white; padding:0.3rem 1rem; font-size:0.85em; border-radius:20px; border:none; cursor:pointer; flex: 0 1 auto;'>Eliminar</button>
+                            <button onclick="mostrarModificarCita(${info.event.id},'${info.event.startStr.slice(0,10)}')" class='btn' style='background:var(--color-oro);color:white; padding:0.3rem 1rem; font-size:0.85em; border-radius:20px; border:none; cursor:pointer; flex: 0 1 auto;'>Modificar</button>
+                        </div>
+                        <div id='modificar-cita-form' style='display:none; margin:1rem 0 0.5rem 0; font-size:0.85em; text-align:left;'>
+                            <div style="margin-bottom:0.6rem;">
+                                <div style="font-size:0.85em; margin-bottom:0.3rem; color:#555;">Nuevo día:</div>
+                                <input type='date' id='nuevo-dia' value='${info.event.startStr.slice(0,10)}' style="width:100%; padding:0.5rem; border:1px solid #ddd; border-radius:8px; font-size:0.9em;">
+                            </div>
+                            <div style="margin-bottom:0.6rem;">
+                                <div style="font-size:0.85em; margin-bottom:0.3rem; color:#555;">Nueva hora:</div>
+                                <select id='nueva-hora' style="width:100%; padding:0.5rem; border:1px solid #ddd; border-radius:8px; font-size:0.9em;"></select>
+                            </div>
+                            <div style="display:flex; gap:0.6rem; margin-top:1rem; justify-content:center;">
+                                <button onclick="confirmarModificarCita(${info.event.id})" class='btn' style='background:var(--color-madera);color:white; padding:0.3rem 1rem; font-size:0.85em; border-radius:20px; border:none; cursor:pointer; flex: 0 1 auto;'>Guardar</button>
+                                <button onclick="cancelarModificarCita()" class='btn' style='background:#6c757d;color:white; padding:0.3rem 1rem; font-size:0.85em; border-radius:20px; border:none; cursor:pointer; flex: 0 1 auto;'>Cancelar</button>
+                            </div>
+                        </div>`;
+                    }
+                    document.getElementById('detalle').innerHTML = detalles;
+                    document.getElementById('popup').style.display = 'block';
+                },
+                eventDidMount: function(info) {
+                    const now = new Date();
+                    const eventStart = info.event.start;
+                    // Marcar eventos pasados (día anterior o misma fecha pero hora anterior)
+                    if (
+                        eventStart < now &&
+                        (info.event.allDay === false || info.event.extendedProps.estado)
+                    ) {
+                        info.el.classList.add('pasada');
+                    }
+                    if (info.event.title === 'Día bloqueado') {
+                        info.el.style.backgroundColor = '#dc3545';
+                        info.el.style.opacity = '0.25';
+                    } else if (info.event.extendedProps && info.event.extendedProps.estado === 'aceptada') {
+                        info.el.style.backgroundColor = 'var(--color-oro)';
+                        info.el.style.color = 'white';
+                    } else if (info.event.extendedProps && info.event.extendedProps.estado === 'pendiente') {
+                        info.el.style.backgroundColor = '#ffc107';
+                        info.el.style.color = '#212529';
+                    }
+                }
+            });
+            calendar.render();
+            document.getElementById('cerrar').onclick = function () {
+                document.body.style.overflow = 'auto';
+                document.getElementById('popup').style.display = 'none';
+            };
+            // --- Lógica para formulario de cita manual ---
+            function cargarHorasDisponiblesManual(dia) {
+                if (!dia) { document.getElementById('hora-manual').innerHTML = ''; return; }
+                fetch(`{{ url_for('admin.horarios_disponibles') }}?fecha=${dia}`)
+                .then(res => res.json())
+                .then(horas => {
+                    var select = document.getElementById('hora-manual');
+                    select.innerHTML = '';
+                    horas.forEach(hora => {
+                        var opt = document.createElement('option');
+                        opt.value = hora;
+                        opt.textContent = hora;
+                        select.appendChild(opt);
+                    });
+                });
+            }
+            document.getElementById('dia-manual').addEventListener('change', function() {
+                cargarHorasDisponiblesManual(this.value);
+            });
+            document.getElementById('form-cita-manual').addEventListener('submit', function(e) {
+                e.preventDefault();
+                var nombre = document.getElementById('nombre-manual').value.trim();
+                var dia = document.getElementById('dia-manual').value;
+                var hora = document.getElementById('hora-manual').value;
+                if (!nombre || !dia || !hora) { alert('Completa todos los campos'); return; }
+                var fecha = `${dia}T${hora}`;
+                fetch('/api/cita/manual', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, fecha })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        document.getElementById('mensaje-cita-manual').textContent = 'Cita creada correctamente.';
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        document.getElementById('mensaje-cita-manual').textContent = data.error || 'No se pudo crear la cita.';
+                    }
+                });
+            });
+            document.getElementById('mostrar-form-cita-manual').onclick = function() {
+                var cont = document.getElementById('contenedor-form-cita-manual');
+                if (cont.style.display === 'none') {
+                    cont.style.display = 'block';
+                    this.textContent = 'Ocultar formulario';
+                } else {
+                    cont.style.display = 'none';
+                    this.textContent = 'Crear cita manual';
+                }
+            };
+            document.getElementById('cancelar-cita-manual').onclick = function() {
+                document.getElementById('contenedor-form-cita-manual').style.display = 'none';
+                document.getElementById('form-cita-manual').reset();
+            };
+        });
+});
+// Funciones globales para gestión de citas
+function gestionarCita(id, accion) {
+    fetch(`/api/cita/${id}/${accion}`, { method: 'POST' })
+    .then(response => { if (response.ok) location.reload(); else alert('Error al procesar la cita.'); });
+}
+function eliminarCita(id) {
+    if (!confirm('¿Seguro que quieres eliminar esta cita?')) return;
+    fetch("{{ url_for('admin.eliminar_cita_api', id=0) }}".replace('0', id), { method: 'POST' })
+    .then(res => res.json())
+    .then(function(data) { if (!data.ok) alert(data.error || 'No se pudo eliminar la cita.'); else location.reload(); });
+}
+function mostrarModificarCita(id, dia) {
+    document.getElementById('modificar-cita-form').style.display = 'block';
+    document.getElementById('nuevo-dia').value = dia;
+    cargarHorasDisponibles(dia);
+    document.getElementById('nuevo-dia').onchange = function() { cargarHorasDisponibles(this.value); };
+}
+function cancelarModificarCita() {
+    document.getElementById('modificar-cita-form').style.display = 'none';
+}
+function cargarHorasDisponibles(dia) {
+    fetch(`/horarios_disponibles?fecha=${dia}`)
+    .then(res => res.json())
+    .then(horas => {
+        var select = document.getElementById('nueva-hora');
+        select.innerHTML = '';
+        horas.forEach(hora => {
+            var opt = document.createElement('option');
+            opt.value = hora;
+            opt.textContent = hora;
+            select.appendChild(opt);
+        });
+    });
+}
+function confirmarModificarCita(id) {
+    var dia = document.getElementById('nuevo-dia').value;
+    var hora = document.getElementById('nueva-hora').value;
+    if (!dia || !hora) { alert('Selecciona día y hora'); return; }
+    var nueva_fecha = `${dia}T${hora}`;
+    fetch(`/api/cita/${id}/modificar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nueva_fecha })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            alert('Cita modificada correctamente. Nuevo horario: ' + document.getElementById('nuevo-dia').value + ' ' + document.getElementById('nueva-hora').value);
+            location.reload();
+        } else {
+            alert(data.error || 'No se pudo modificar la cita.');
+        }
+    });
+}
+</script>
+{% endblock %}

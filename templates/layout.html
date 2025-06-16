@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Panel Peluquería{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#28a745">
+    
+    <!-- Fuentes de Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Estilos adicionales para el calendario -->
+    <style>
+        .calendar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-navigation {
+            display: flex;
+            gap: 10px;
+        }
+        .calendar-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--color-madera);
+            font-family: 'Playfair Display', serif;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: var(--color-marmol-oscuro);
+            border: 1px solid var(--color-marmol-oscuro);
+        }
+        .calendar-day-header {
+            background-color: var(--color-madera);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+        }
+        .calendar-day {
+            background-color: white;
+            min-height: 100px;
+            padding: 5px;
+            border: 1px solid var(--color-marmol-oscuro);
+        }
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .event {
+            background-color: var(--color-oro);
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .event.pasada {
+            opacity: 0.7;
+            background-color: #666;
+        }
+        .event.aceptada {
+            background-color: #28a745;
+        }
+        .event.pendiente {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .event.rechazada {
+            background-color: #dc3545;
+            text-decoration: line-through;
+        }
+    </style>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/service-worker.js');
+            });
+        }
+    </script>
+    <style>
+        :root {
+            --color-madera: #8B5A2B;
+            --color-oro: #D4AF37;
+            --color-marmol: #f5f5f5;
+            --color-texto: #333;
+            --sombra: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            color: var(--color-texto);
+            line-height: 1.6;
+        }
+        
+        /* Barra de navegación */
+        nav { 
+            background-color: var(--color-madera);
+            color: white; 
+            padding: 0.8rem 1.5rem;
+            box-shadow: var(--sombra);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0.8rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-links a:hover, 
+        .nav-links a:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .nav-links a i {
+            font-size: 1.1em;
+        }
+        
+        /* Menú móvil */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+            
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: var(--color-madera);
+                flex-direction: column;
+                padding: 1rem;
+                gap: 0.5rem;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            
+            .nav-links.active {
+                display: flex;
+            }
+            
+            .nav-links a {
+                padding: 0.8rem 1rem;
+                border-radius: 4px;
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+        }
+        .contenido { 
+            padding: 2rem; 
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        /* --- Móvil --- */
+        @media (max-width: 600px) {
+            .contenido { padding: 0.5em; }
+            #calendar { max-width: 100vw !important; margin: 10px 0 !important; font-size: 0.95em; }
+            h1, h2 { font-size: 1.2em; }
+            form, .form-section { font-size: 1em; }
+            input, select, button {
+                font-size: 1em;
+                width: 100%;
+                box-sizing: border-box;
+                margin-bottom: 10px;
+            }
+            button, .btn-horario {
+                padding: 12px 0;
+                font-size: 1em;
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            .horarios {
+                flex-direction: column;
+                gap: 8px;
+            }
+            #popup {
+                left: 2vw !important;
+                top: 10vh !important;
+                width: 96vw !important;
+                max-width: 96vw !important;
+                font-size: 1em;
+                padding: 10px !important;
+            }
+            /* Ajuste de la cabecera de FullCalendar para móvil */
+            .fc-header-toolbar, .fc-toolbar {
+                font-size: 0.70em !important;
+            }
+            .fc-toolbar-title {
+                font-size: 1em !important;
+            }
+            .fc-button {
+                font-size: 0.70em !important;
+                padding: 4px 8px !important;
+                min-width: 32px;
+                min-height: 28px;
+            }
+        }
+        /* Barra de hora actual en FullCalendar */
+        .fc-timegrid-now-indicator-arrow, .fc-timegrid-now-indicator-line {
+            background: #e74c3c !important;
+            border-color: #e74c3c !important;
+            z-index: 10;
+        }
+        /* Citas pasadas: color más oscuro */
+        .fc-event.pasada, .fc-event.pasada .fc-event-main {
+            background-color: #555 !important;
+            border-color: #333 !important;
+            color: #eee !important;
+            opacity: 0.85;
+        }
+    </style>
+
+    <!-- FullCalendar CSS se carga en las páginas que lo necesiten -->
+
+</head>
+<body>
+    {% if not ocultar_nav %}
+    <nav>
+        <div class="nav-container">
+            <a href="{{ url_for('admin.calendario') }}" class="nav-logo">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Panel Peluquería</span>
+            </a>
+            
+            <button class="menu-toggle" aria-label="Menú">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="nav-links">
+                <a href="{{ url_for('admin.calendario') }}">
+                    <i class="far fa-calendar-alt"></i>
+                    <span>Calendario</span>
+                </a>
+                <a href="{{ url_for('admin.solicitudes') }}">
+                    <i class="fas fa-inbox"></i>
+                    <span>Solicitudes</span>
+                </a>
+                <a href="{{ url_for('admin.bloquear_dias') }}">
+                    <i class="fas fa-calendar-times"></i>
+                    <span>Bloquear días</span>
+                </a>
+                <a href="{{ url_for('cliente.logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Cerrar sesión</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <script>
+    // Toggle del menú móvil
+    document.querySelector('.menu-toggle').addEventListener('click', function() {
+        document.querySelector('.nav-links').classList.toggle('active');
+    });
+    
+    // Cerrar menú al hacer clic en un enlace en móviles
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                document.querySelector('.nav-links').classList.remove('active');
+            }
+        });
+    });
+    </script>
+    {% endif %}
+    <div class="contenido">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Scripts necesarios -->
+    <script>
+        console.log('Cargando scripts...');
+        
+        // Función para cargar scripts en orden
+        function loadScript(src, callback) {
+            console.log('Cargando script:', src);
+            var script = document.createElement('script');
+            script.src = src;
+            script.onload = function() {
+                console.log('Script cargado:', src);
+                if (callback) callback();
+            };
+            script.onerror = function() {
+                console.error('Error al cargar el script:', src);
+            };
+            document.body.appendChild(script);
+        }
+        
+        // Cargar jQuery primero
+        loadScript('https://code.jquery.com/jquery-3.6.0.min.js', function() {
+            // Luego cargar FullCalendar
+            loadScript('https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.js', function() {
+                // Luego cargar los locales
+                loadScript('https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales-all.min.js', function() {
+                    // Luego cargar HTMX
+                    loadScript('https://unpkg.com/htmx.org@1.9.2', function() {
+                        // Finalmente cargar la extensión WS de HTMX
+                        loadScript('https://unpkg.com/htmx.org/dist/ext/ws.js', function() {
+                            console.log('Todos los scripts se han cargado correctamente');
+                            
+                            // Disparar un evento personalizado cuando todos los scripts estén cargados
+                            document.dispatchEvent(new Event('allScriptsLoaded'));
+                        });
+                    });
+                });
+            });
+        });
+    </script>
+    
+    <!-- Scripts personalizados -->
+    <script>
+        // Esperar a que todos los scripts estén cargados
+        document.addEventListener('allScriptsLoaded', function() {
+            console.log('Evento allScriptsLoaded disparado');
+            // Aquí podrías inicializar componentes que dependan de las bibliotecas cargadas
+        });
+        
+        // Inicializar componentes cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM completamente cargado (layout)');
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+    
+    <!-- Inicialización del service worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

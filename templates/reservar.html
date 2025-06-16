@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservar Cita</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card marble-effect">
+            <div class="card-header">
+                <h1><i class="fas fa-calendar-alt" style="margin-right: 10px;"></i> Reserva tu Cita</h1>
+                <p>Selecciona el servicio y la fecha que mejor se adapte a ti</p>
+            </div>
+            
+            <div class="card-body">
+                {% if mensaje %}
+                    <div class="alert alert-success" style="text-align:center;">
+                        <div style="display:flex; flex-direction:column; align-items:center; gap:1.2rem;">
+                            <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="45" cy="45" r="40" fill="#f5f5f5" stroke="#c0a062" stroke-width="4"/>
+                                <path d="M28 48L41 61L63 39" stroke="#28a745" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                                    <animate attributeName="stroke-dasharray" values="0,100;40,100" dur="1s" fill="freeze"/>
+                                </path>
+                            </svg>
+                            <span style="font-size:1.2rem; color:var(--color-madera); font-weight:600;">{{ mensaje }}</span>
+                        </div>
+                        <div class="text-center mt-4">
+                            <a href="{{ url_for('cliente.reservar') }}" class="btn btn-primary" style="margin-left: 1rem;">
+                                <i class="fas fa-arrow-left"></i> Volver a reservar
+                            </a>
+                        </div>
+                    </div>
+                {% elif error %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> {{ error }}
+                    </div>
+                {% else %}
+                    <form method="post" id="form-reserva" class="booking-form">
+                        <div class="form-group">
+                            <label for="servicio"><i class="fas fa-scissors" style="color: var(--color-oro); margin-right: 8px;"></i> Servicio</label>
+                            <select name="servicio" id="servicio" class="form-control" required>
+                                <option value="" disabled selected>Selecciona un servicio</option>
+                                <option value="Corte Sencillo">Corte de Cabello Clásico</option>
+                                <option value="Corte y Barba">Corte + Arreglo de Barba</option>
+                                <option value="Tinte">Tinte y Coloración</option>
+                                <option value="Peinado">Peinado de Gala</option>
+                                <option value="Tratamiento">Tratamiento Capilar</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fecha"><i class="far fa-calendar-alt" style="color: var(--color-oro); margin-right: 8px;"></i> Fecha</label>
+                            <input type="date" name="fecha" id="fecha" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="far fa-clock" style="color: var(--color-oro); margin-right: 8px;"></i> Horario Disponible</label>
+                            <div id="horarios" class="horarios">
+                                <p class="text-muted" style="font-style: italic; color: #666;">Selecciona una fecha para ver los horarios disponibles</p>
+                            </div>
+                            <input type="hidden" name="hora_seleccionada" id="hora_seleccionada">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nombre"><i class="fas fa-user" style="color: var(--color-oro); margin-right: 8px;"></i> Nombre Completo</label>
+                            <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ej: Juan Pérez" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="correo"><i class="fas fa-envelope" style="color: var(--color-oro); margin-right: 8px;"></i> Correo Electrónico</label>
+                            <input type="email" name="correo" id="correo" class="form-control" placeholder="tucorreo@ejemplo.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="telefono"><i class="fas fa-phone" style="color: var(--color-oro); margin-right: 8px;"></i> Teléfono</label>
+                            <input type="tel" name="telefono" id="telefono" class="form-control" placeholder="Ej: +34 600 123 456" required>
+                        </div>
+
+                        <button type="submit" id="btn-solicitar" class="btn" disabled>
+                            <i class="fas fa-calendar-check" style="margin-right: 8px;"></i> Confirmar Reserva
+                        </button>
+                    </form>
+                {% endif %}
+
+                <div class="text-center mt-4">
+                        <form method="GET" action="{{ url_for('cliente.mis_citas') }}">
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="fas fa-calendar-check"></i> Ver mis citas
+                            </button>
+                        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fechaInput = document.getElementById('fecha');
+            const hoy = new Date().toISOString().split('T')[0];
+            fechaInput.setAttribute('min', hoy);
+            
+            // Establecer la fecha mínima como mañana
+            const manana = new Date();
+            manana.setDate(manana.getDate() + 1);
+            const mananaFormateada = manana.toISOString().split('T')[0];
+            fechaInput.value = mananaFormateada;
+            
+            // Cargar horarios automáticamente al cargar la página
+            if (fechaInput.value) {
+                cargarHorarios(fechaInput.value);
+            }
+        });
+
+        document.getElementById('fecha').addEventListener('change', function() {
+            const fecha = this.value;
+            if (!fecha) return;
+            cargarHorarios(fecha);
+        });
+
+        async function cargarHorarios(fecha) {
+            const response = await fetch(`{{ url_for('admin.horarios_disponibles') }}?fecha=${fecha}`);
+            let horas = await response.json();
+            const horariosDiv = document.getElementById('horarios');
+            horariosDiv.innerHTML = '';
+            document.getElementById('hora_seleccionada').value = '';
+            document.getElementById('btn-solicitar').disabled = true;
+
+            // Filtrar horas pasadas si la fecha es hoy
+            const hoy = new Date();
+            const fechaSeleccionada = new Date(fecha);
+            if (fechaSeleccionada.toDateString() === hoy.toDateString()) {
+                const horaActual = hoy.getHours();
+                const minutosActual = hoy.getMinutes();
+                horas = horas.filter(hora => {
+                    const [h, m] = hora.split(':').map(Number);
+                    return h > horaActual || (h === horaActual && m > minutosActual);
+                });
+            }
+            
+            if (horas.length === 0) {
+                horariosDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> No hay horarios disponibles para esta fecha. Por favor, selecciona otro día.
+                    </div>`;
+                return;
+            }
+            
+            const horariosContainer = document.createElement('div');
+            horariosContainer.className = 'horarios-grid';
+            
+            horas.forEach(hora => {
+                const boton = document.createElement('button');
+                boton.type = 'button';
+                boton.className = 'btn-horario';
+                boton.innerHTML = `
+                    <span class="hora">${hora}</span>
+                    <span class="disponible">Disponible</span>
+                `;
+                
+                boton.onclick = () => {
+                    document.getElementById('hora_seleccionada').value = `${fecha}T${hora}`;
+                    document.querySelectorAll('.btn-horario').forEach(b => b.classList.remove('activo'));
+                    boton.classList.add('activo');
+                    document.getElementById('btn-solicitar').disabled = false;
+                    
+                    // Desplazamiento suave al botón de confirmación
+                    document.getElementById('btn-solicitar').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                };
+                
+                horariosContainer.appendChild(boton);
+            });
+            
+            horariosDiv.innerHTML = '';
+            horariosDiv.appendChild(horariosContainer);
+        }
+        
+        // Validación del formulario
+        document.getElementById('form-reserva')?.addEventListener('submit', function(e) {
+            const horaSeleccionada = document.getElementById('hora_seleccionada').value;
+            if (!horaSeleccionada) {
+                e.preventDefault();
+                alert('Por favor, selecciona un horario disponible.');
+                return false;
+            }
+            return true;
+        });
+    </script>
+</body>
+</html>
+<!-- Página de reservas mejorada: el usuario elige servicio, luego día, luego hora (botones), y finalmente rellena sus datos. -->

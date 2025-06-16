@@ -1,0 +1,71 @@
+{% extends 'layout.html' %}
+{% block title %}Tus citas{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="card marble-effect">
+        <div class="card-header">
+            <h2><i class="fas fa-calendar-check" style="margin-right: 10px;"></i> Tus citas</h2>
+        </div>
+        <div class="card-body">
+            {% set citas_futuras = [] %}
+            {% for cita in citas %}
+                {% if cita.fecha > hoy %}
+                    {% set _ = citas_futuras.append(cita) %}
+                {% endif %}
+            {% endfor %}
+            {% macro fecha_larga(fecha_iso) %}
+                {%- set meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'] -%}
+                {%- set dt = fecha_iso.split('T') -%}
+                {%- set fecha = dt[0].split('-') -%}
+                {%- set hora = dt[1][:5] -%}
+                {{ fecha[2]|int }} de {{ meses[fecha[1]|int - 1] }} de {{ fecha[0] }} a las {{ hora }}
+            {% endmacro %}
+            {% if citas_futuras %}
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    {% for cita in citas_futuras %}
+                    <li style="background: var(--color-marmol); border-radius: 10px; box-shadow: var(--sombra); margin-bottom: 1.5rem; padding: 1.5rem; border: 1px solid var(--color-marmol-oscuro); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
+                        <div style="flex: 2; min-width: 220px;">
+                            <div style="font-size: 1.1rem; color: var(--color-madera); font-weight: 600; margin-bottom: 0.5rem;">
+                                <i class="far fa-calendar-alt" style="color: var(--color-oro);"></i> {{ fecha_larga(cita.fecha) }}
+                            </div>
+                            <div style="margin-bottom: 0.3rem;"><i class="fas fa-cut" style="color: var(--color-oro);"></i> <strong>Servicio:</strong> {{ cita.servicio }}</div>
+                            <div style="margin-bottom: 0.3rem;"><i class="fas fa-user" style="color: var(--color-oro);"></i> <strong>Nombre:</strong> {{ cita.nombre }}</div>
+                            <div style="margin-bottom: 0.3rem;"><i class="fas fa-envelope" style="color: var(--color-oro);"></i> <strong>Correo:</strong> {{ cita.correo }}</div>
+                            <div><i class="fas fa-phone" style="color: var(--color-oro);"></i> <strong>Teléfono:</strong> {{ cita.telefono }}</div>
+                        </div>
+                        <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-end;">
+                            <span class="badge bg-info" style="background: var(--color-oro); color: white; font-size: 1em; padding: 0.5em 1em; border-radius: 8px; margin-bottom: 0.7rem;">{{ cita.estado|capitalize }}</span>
+                            <form method="POST" action="{{ url_for('cliente.cancelar_cita', id=cita.id) }}" style="display:inline; width:100%;">
+                                <button type="submit" class="btn btn-danger btn-sm" style="background: #dc3545; color: white; width: 100%;" onclick="return confirm('¿Seguro que quieres cancelar esta cita?')">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="no-citas-animation" style="text-align:center; margin:2rem 0;">
+                    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="60" cy="60" r="50" fill="#f5f5f5" stroke="#c0a062" stroke-width="4"/>
+                        <rect x="35" y="45" width="50" height="35" rx="8" fill="#fff" stroke="#c0a062" stroke-width="2"/>
+                        <rect x="50" y="60" width="20" height="5" rx="2.5" fill="#c0a062" opacity="0.3">
+                            <animate attributeName="width" values="20;5;20" dur="1.5s" repeatCount="indefinite"/>
+                        </rect>
+                        <circle cx="60" cy="80" r="3" fill="#c0a062">
+                            <animate attributeName="cy" values="80;90;80" dur="1.5s" repeatCount="indefinite"/>
+                        </circle>
+                    </svg>
+                    <p style="color: var(--color-madera); font-size: 1.2rem; margin-top:1.5rem;">¡No tienes citas registradas!<br>Reserva tu primera cita y aparecerá aquí.</p>
+                </div>
+            {% endif %}
+            <div class="text-center mt-4">
+                <a href="{{ url_for('cliente.mis_citas') }}" class="btn" style="display:inline-block; background: var(--color-madera); color: white; padding: 0.8rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: var(--transicion);">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}{% endblock %}
